@@ -14,11 +14,11 @@ main =
                     , subscriptions = subscriptions
                     }
 
-type alias Model = Event
+type alias Model = Events
 
 init : () -> (Model, Cmd Msg)
 init _ = 
-    ( Event "id" [("key", "val")]
+    ( [ Event "id" [("key", "val")] ]
     , Cmd.none
     )
 
@@ -28,30 +28,30 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         Hello s ->
-            let res = runEventParser s in
+            let res = getEvents s in
             case res of
-                Ok event -> (event, Cmd.none)
-                Err _ -> (Event "error" [("key", "error")] , Cmd.none) 
+                Ok events -> (events, Cmd.none)
+                Err _ -> ([ Event "error" [("key", "error")] ] , Cmd.none) 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.none
 
 view : Model -> Html Msg
-view (Event id descriptors) =
+view model  =
     div []
     [ header
-    , body descriptors 
+    , body model 
     , footer
     ]
 
 header = 
     div [ class "header" ] [ text "lemon" ]
 
-body descriptors =
+body model =
     div [ class "body" ] 
     [ outline
-    , cal descriptors
+    , cal model 
     , editor
     ]
 
@@ -62,12 +62,18 @@ outline =
             ]
         ] []
 
-cal descriptors = 
+-- model = Events = [Event] = [Event Id Descriptors]
+cal : Events -> Html Msg
+cal model = 
     div [ classList
             [ ("container", True)
             , ("calendar", True)
             ]
-        ] (calItems descriptors) 
+        ] [ div [] (model
+            |> List.map (\(Event id descriptors) -> calItems descriptors) 
+            |> List.map (\container -> div [] container) 
+            )
+          ]
 
 editor = 
     div [ classList

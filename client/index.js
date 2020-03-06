@@ -5282,13 +5282,16 @@ var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2(
-		A2(
-			$author$project$EventParser$Event,
-			'id',
-			_List_fromArray(
-				[
-					_Utils_Tuple2('key', 'val')
-				])),
+		_List_fromArray(
+			[
+				A2(
+				$author$project$EventParser$Event,
+				'id',
+				_List_fromArray(
+					[
+						_Utils_Tuple2('key', 'val')
+					]))
+			]),
 		$elm$core$Platform$Cmd$none);
 };
 var $elm$core$Platform$Sub$batch = _Platform_batch;
@@ -5608,18 +5611,22 @@ var $elm$parser$Parser$symbol = function (str) {
 			$elm$parser$Parser$ExpectingSymbol(str)));
 };
 var $elm$core$Basics$neq = _Utils_notEqual;
+var $author$project$EventParser$isValidValueChar = function (_char) {
+	return (!_Utils_eq(
+		_char,
+		_Utils_chr('='))) && ((!_Utils_eq(
+		_char,
+		_Utils_chr('['))) && ((!_Utils_eq(
+		_char,
+		_Utils_chr(']'))) && (!_Utils_eq(
+		_char,
+		_Utils_chr('\n')))));
+};
 var $author$project$EventParser$valueParser = $elm$parser$Parser$getChompedString(
 	A2(
 		$elm$parser$Parser$ignorer,
 		$elm$parser$Parser$succeed(_Utils_Tuple0),
-		$elm$parser$Parser$chompWhile(
-			function (c) {
-				return (!_Utils_eq(
-					c,
-					_Utils_chr('\n'))) && (!_Utils_eq(
-					c,
-					_Utils_chr('=')));
-			})));
+		$elm$parser$Parser$chompWhile($author$project$EventParser$isValidValueChar)));
 var $author$project$EventParser$descriptorHelp = function (pairs) {
 	return $elm$parser$Parser$oneOf(
 		_List_fromArray(
@@ -5764,6 +5771,31 @@ var $author$project$EventParser$eventParser = A2(
 				})),
 		$author$project$EventParser$idParser),
 	$author$project$EventParser$descriptorsParser);
+var $author$project$EventParser$eventsParserHelp = function (events) {
+	return $elm$parser$Parser$oneOf(
+		_List_fromArray(
+			[
+				A2(
+				$elm$parser$Parser$keeper,
+				A2(
+					$elm$parser$Parser$ignorer,
+					$elm$parser$Parser$succeed(
+						function (event) {
+							return $elm$parser$Parser$Loop(
+								A2($elm$core$List$cons, event, events));
+						}),
+					$elm$parser$Parser$spaces),
+				$author$project$EventParser$eventParser),
+				A2(
+				$elm$parser$Parser$map,
+				function (_v0) {
+					return $elm$parser$Parser$Done(
+						$elm$core$List$reverse(events));
+				},
+				$elm$parser$Parser$succeed(_Utils_Tuple0))
+			]));
+};
+var $author$project$EventParser$eventsParser = A2($elm$parser$Parser$loop, _List_Nil, $author$project$EventParser$eventsParserHelp);
 var $elm$parser$Parser$DeadEnd = F3(
 	function (row, col, problem) {
 		return {col: col, problem: problem, row: row};
@@ -5823,25 +5855,28 @@ var $elm$parser$Parser$run = F2(
 				A2($elm$core$List$map, $elm$parser$Parser$problemToDeadEnd, problems));
 		}
 	});
-var $author$project$EventParser$runEventParser = function (s) {
-	return A2($elm$parser$Parser$run, $author$project$EventParser$eventParser, s);
+var $author$project$EventParser$getEvents = function (s) {
+	return A2($elm$parser$Parser$run, $author$project$EventParser$eventsParser, s);
 };
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		var s = msg.a;
-		var res = $author$project$EventParser$runEventParser(s);
+		var res = $author$project$EventParser$getEvents(s);
 		if (res.$ === 'Ok') {
-			var event = res.a;
-			return _Utils_Tuple2(event, $elm$core$Platform$Cmd$none);
+			var events = res.a;
+			return _Utils_Tuple2(events, $elm$core$Platform$Cmd$none);
 		} else {
 			return _Utils_Tuple2(
-				A2(
-					$author$project$EventParser$Event,
-					'error',
-					_List_fromArray(
-						[
-							_Utils_Tuple2('key', 'error')
-						])),
+				_List_fromArray(
+					[
+						A2(
+						$author$project$EventParser$Event,
+						'error',
+						_List_fromArray(
+							[
+								_Utils_Tuple2('key', 'error')
+							]))
+					]),
 				$elm$core$Platform$Cmd$none);
 		}
 	});
@@ -5898,7 +5933,7 @@ var $elm$html$Html$Attributes$classList = function (classes) {
 				$elm$core$Tuple$first,
 				A2($elm$core$List$filter, $elm$core$Tuple$second, classes))));
 };
-var $author$project$Main$cal = function (descriptors) {
+var $author$project$Main$cal = function (model) {
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
@@ -5910,7 +5945,25 @@ var $author$project$Main$cal = function (descriptors) {
 						_Utils_Tuple2('calendar', true)
 					]))
 			]),
-		$author$project$Main$calItems(descriptors));
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				A2(
+					$elm$core$List$map,
+					function (container) {
+						return A2($elm$html$Html$div, _List_Nil, container);
+					},
+					A2(
+						$elm$core$List$map,
+						function (_v0) {
+							var id = _v0.a;
+							var descriptors = _v0.b;
+							return $author$project$Main$calItems(descriptors);
+						},
+						model)))
+			]));
 };
 var $elm$html$Html$Events$alwaysStop = function (x) {
 	return _Utils_Tuple2(x, true);
@@ -5997,7 +6050,7 @@ var $author$project$Main$outline = A2(
 				]))
 		]),
 	_List_Nil);
-var $author$project$Main$body = function (descriptors) {
+var $author$project$Main$body = function (model) {
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
@@ -6007,7 +6060,7 @@ var $author$project$Main$body = function (descriptors) {
 		_List_fromArray(
 			[
 				$author$project$Main$outline,
-				$author$project$Main$cal(descriptors),
+				$author$project$Main$cal(model),
 				$author$project$Main$editor
 			]));
 };
@@ -6031,16 +6084,14 @@ var $author$project$Main$header = A2(
 		[
 			$elm$html$Html$text('lemon')
 		]));
-var $author$project$Main$view = function (_v0) {
-	var id = _v0.a;
-	var descriptors = _v0.b;
+var $author$project$Main$view = function (model) {
 	return A2(
 		$elm$html$Html$div,
 		_List_Nil,
 		_List_fromArray(
 			[
 				$author$project$Main$header,
-				$author$project$Main$body(descriptors),
+				$author$project$Main$body(model),
 				$author$project$Main$footer
 			]));
 };

@@ -1,3 +1,7 @@
+-- TODO: key value pairs are optional
+-- TODO: parsing should continue even if one event failed to parse
+-- TODO: parsing for days
+
 module EventParser exposing (..)
 
 import Parser exposing (..)
@@ -11,15 +15,29 @@ type alias Descriptors = List (Key, Value)
 type Event = Event Id Descriptors 
 type alias Events = List Event
 
-runEventParser : String -> Result (List DeadEnd) Event
-runEventParser s = 
-    run eventParser s
+getEvents : String -> Result (List DeadEnd) Events
+getEvents s = 
+    run eventsParser s
+
+eventsParser : Parser Events
+eventsParser =
+    loop [] eventsParserHelp
+
+eventsParserHelp : Events -> Parser (Step (Events) (Events))
+eventsParserHelp events = 
+    oneOf
+        [ succeed (\event -> Loop ( event :: events ))
+            |. spaces
+            |= eventParser
+        , succeed ()
+            |> map (\_ -> Done (List.reverse events))
+        ]
 
 eventParser : Parser Event
 eventParser = 
     succeed (\id descriptors -> Event id descriptors)
     |= idParser
-    |= descriptorsParser
+    |= descriptorsParser 
 
 idParser : Parser Id
 idParser =
@@ -62,9 +80,19 @@ valueParser : Parser String
 valueParser = 
     getChompedString <|
         succeed ()
-        |. chompWhile (\c -> c /= '\n' && c /= '=')
-
+        |. chompWhile isValidValueChar
+        
 isValidKeyChar : Char -> Bool
 isValidKeyChar char = 
-    Char.isAlphaNum char || char == '.' || char == '#' || char == '_'
+    Char.isAlphaNum char || 
+    char == '.' || 
+    char == '#' || 
+    char == '_'
+
+isValidValueChar : Char -> Bool
+isValidValueChar char = 
+    char /= '=' && 
+    char /= '[' && 
+    char /= ']' && 
+    char /= '\n'
 
