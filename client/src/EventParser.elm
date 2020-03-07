@@ -7,7 +7,11 @@ module EventParser exposing (..)
 import Parser exposing (..)
 import List
 
-type alias Key = String
+type Key = Name 
+    | Time 
+    | Location 
+    | Custom String
+-- error handling for value should be done here or when processing?
 type alias Value = String
 type alias Id = String
 type alias Descriptors = List (Key, Value)
@@ -45,10 +49,10 @@ idParser =
     |. spaces
     |. symbol "["
     |. spaces
-    |= keyParser
+    |= idValueParser 
     |. spaces
     |. symbol "]"
-    |. chompUntilEndOr "\n"
+    |. spaces
 
 descriptorsParser : Parser Descriptors
 descriptorsParser = 
@@ -64,17 +68,29 @@ descriptorHelp pairs  =
             |. symbol "="
             |.spaces
             |= valueParser -- parsing the value
-            |. chompUntilEndOr "\n"
             |. spaces
         , succeed ()
             |> map (\_ -> Done (List.reverse pairs))
         ]
 
-keyParser : Parser String
-keyParser = 
+idValueParser : Parser Id
+idValueParser =
     getChompedString <|
-        succeed ()
+        succeed () 
         |. chompWhile isValidKeyChar
+
+keyParser : Parser Key 
+keyParser = 
+    oneOf
+        [ succeed Name
+            |. keyword "name"
+        , succeed Time
+            |. keyword "time"
+        , succeed Location
+            |. keyword "location"
+        , succeed (\s -> Custom s)
+            |= idValueParser
+        ]
 
 valueParser : Parser String
 valueParser = 
@@ -84,15 +100,16 @@ valueParser =
         
 isValidKeyChar : Char -> Bool
 isValidKeyChar char = 
-    Char.isAlphaNum char || 
-    char == '.' || 
-    char == '#' || 
-    char == '_'
+    Char.isAlphaNum char 
+        || char == '.' 
+        || char == '#' 
+        || char == '_'
+        || char == '-'
 
 isValidValueChar : Char -> Bool
 isValidValueChar char = 
-    char /= '=' && 
-    char /= '[' && 
-    char /= ']' && 
-    char /= '\n'
+    char /= '=' 
+        && char /= '[' 
+        && char /= ']' 
+        && char /= '\n'
 

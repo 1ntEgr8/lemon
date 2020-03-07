@@ -1,3 +1,6 @@
+-- TODO: prev event state, and new event state
+-- update the state only when the parser returns a valid value
+-- otherwise render the old state
 module Main exposing (..)
 
 import Browser
@@ -14,24 +17,26 @@ main =
                     , subscriptions = subscriptions
                     }
 
+-- Events = List Event
+-- Event = Event Id Descriptors
 type alias Model = Events
 
 init : () -> (Model, Cmd Msg)
 init _ = 
-    ( [ Event "id" [("key", "val")] ]
+    ( [ Event "id" [(Custom "key", "val")] ]
     , Cmd.none
     )
 
-type Msg = Hello String
+type Msg = ParseEditorText String
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
-        Hello s ->
-            let res = getEvents s in
-            case res of
+        ParseEditorText s ->
+            case (getEvents s) of
                 Ok events -> (events, Cmd.none)
-                Err _ -> ([ Event "error" [("key", "error")] ] , Cmd.none) 
+                Err _ -> (model, Cmd.none)
+                -- Err _ -> ([ Event "error" [(Custom "oh-no", "error")] ] , Cmd.none) 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -62,16 +67,16 @@ outline =
             ]
         ] []
 
--- model = Events = [Event] = [Event Id Descriptors]
 cal : Events -> Html Msg
-cal model = 
+cal events = 
     div [ classList
             [ ("container", True)
             , ("calendar", True)
             ]
-        ] [ div [] (model
-            |> List.map (\(Event id descriptors) -> calItems descriptors) 
-            |> List.map (\container -> div [] container) 
+        ] [ div [] 
+            ( events 
+            |> List.map (\(Event id descriptors) ->  descriptorDivs descriptors) 
+            |> List.map (\e -> div [] e) 
             )
           ]
 
@@ -84,16 +89,14 @@ editor =
         [ textarea 
             [ class "editor-text-area"
             , spellcheck False
-            , onInput parseText
+            , onInput (\s -> ParseEditorText s) 
             ] [] 
         ]
 
 footer = 
     div [ class "footer" ] [ text "made with <3 by 1ntEgr8" ]
 
-calItems : Descriptors -> List (Html Msg)
-calItems descriptors =
-    List.map (\(x, y) -> div [] [ text ("id: " ++ x ++ " value: " ++ y) ] ) descriptors
+descriptorDivs : Descriptors -> List (Html Msg)
+descriptorDivs descriptors =
+    List.map (\(_, y) -> div [] [ text ("value: " ++ y) ] ) descriptors
 
-parseText : String -> Msg
-parseText s = Hello s 
