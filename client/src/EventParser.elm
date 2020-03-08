@@ -1,5 +1,4 @@
 -- TODO: key value pairs are optional
--- TODO: parsing should continue even if one event failed to parse
 -- TODO: parsing for days
 
 module EventParser exposing (..)
@@ -14,7 +13,8 @@ type Key = Name
 -- error handling for value should be done here or when processing?
 type alias Value = String
 type alias Id = String
-type alias Descriptors = List (Key, Value)
+type alias Descriptor = (Key, Value)
+type alias Descriptors = List Descriptor
 
 type Event = Event Id Descriptors 
 type alias Events = List Event
