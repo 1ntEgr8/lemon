@@ -34,6 +34,22 @@ body {
     overflow: scroll;
 }
 
+.tag {
+    opacity: 0.7;
+}
+
+.name {
+    font-size: 1.5rem;
+}
+
+.time {
+    color: orange;
+}
+
+.location {
+    color: green;
+}
+
 .outline {
     width: 25%;
     color: var(--txt);
@@ -41,6 +57,7 @@ body {
 }
 
 .calendar {
+    display: grid;
     width: 50%;
     color: var(--txt);
     background: var(--edbg);

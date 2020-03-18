@@ -1,3 +1,7 @@
+-- TODO multiple events associated to the same tag feature (implemented using --)
+-- TODO add day feature
+-- TODO figure out the calendar alg
+-- TODO figure out the calendar css
 module Main exposing (..)
 
 import Browser
@@ -14,13 +18,11 @@ main =
                     , subscriptions = subscriptions
                     }
 
--- Events = List Event
--- Event = Event Id Descriptors
 type alias Model = Events
 
 init : () -> (Model, Cmd Msg)
 init _ = 
-    ( [ Event "id" [(Custom "key", "val")] ]
+    ( [ Event "tag" [(Custom "key", "val")] ]
     , Cmd.none
     )
 
@@ -37,7 +39,7 @@ update msg model =
                 -- Err _ -> ([ Event "error" [(Custom "oh-no", "error")] ] , Cmd.none) 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Sub.none
 
 view : Model -> Html Msg
@@ -65,7 +67,6 @@ outline events =
             , ("outline", True)
             ]
         ] (List.map eventContainer events)
-        
  
 cal = 
     div [ classList
@@ -77,7 +78,7 @@ cal =
 editor = 
     div [ classList
             [ ("container", True)
-            , ("editor", True)
+            , ("tag", True)
             ]
         ] 
         [ textarea 
@@ -92,14 +93,24 @@ footer =
 
 parseText : String -> Msg
 parseText s = NewEditorInput s
- 
+
+-- prior to passing to this function, i need to group the events by tag
+-- basically it should look like
+-- currently, it is (Tag, Descriptors)
+-- it should be
+-- (Tag, [] Descriptors)
+
 eventContainer : Event -> Html Msg
-eventContainer (Event id descriptors) =
+eventContainer (Event tag descriptors) =
    div [ classList 
             [ ("event", True)
             ]
        ]
-       [ h3 [] [ text id ]
+       [ h4 
+            [ id tag 
+            ]
+            [ text tag 
+            ]
        , div [] (List.map descriptorContainer descriptors)
        ]
         
@@ -110,4 +121,5 @@ descriptorContainer (key, value) =
         Time -> div [ class "time" ] [ text ("time " ++ value) ]
         Location -> div [ class "location" ] [ text ("location " ++ value) ]
         Custom s -> div [] [ text (s ++ " " ++ value) ]
+
 

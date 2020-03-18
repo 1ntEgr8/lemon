@@ -10,13 +10,12 @@ type Key = Name
     | Time 
     | Location 
     | Custom String
--- error handling for value should be done here or when processing?
 type alias Value = String
-type alias Id = String
+type alias Tag = String
 type alias Descriptor = (Key, Value)
 type alias Descriptors = List Descriptor
 
-type Event = Event Id Descriptors 
+type Event = Event Tag Descriptors 
 type alias Events = List Event
 
 getEvents : String -> Result (List DeadEnd) Events
@@ -39,17 +38,17 @@ eventsParserHelp events =
 
 eventParser : Parser Event
 eventParser = 
-    succeed (\id descriptors -> Event id descriptors)
-    |= idParser
+    succeed (\tag descriptors -> Event tag descriptors)
+    |= tagParser 
     |= descriptorsParser 
 
-idParser : Parser Id
-idParser =
-    succeed (\id -> id)
+tagParser : Parser Tag 
+tagParser =
+    succeed identity
     |. spaces
     |. symbol "["
     |. spaces
-    |= idValueParser 
+    |= tagValueParser 
     |. spaces
     |. symbol "]"
     |. spaces
@@ -73,8 +72,8 @@ descriptorHelp pairs  =
             |> map (\_ -> Done (List.reverse pairs))
         ]
 
-idValueParser : Parser Id
-idValueParser =
+tagValueParser : Parser Tag 
+tagValueParser =
     getChompedString <|
         succeed () 
         |. chompWhile isValidKeyChar
@@ -89,7 +88,7 @@ keyParser =
         , succeed Location
             |. keyword "location"
         , succeed (\s -> Custom s)
-            |= idValueParser
+            |= tagValueParser
         ]
 
 valueParser : Parser String
