@@ -1,10 +1,12 @@
 @import url('https://cdn.jsdelivr.net/npm/hack-font@3.3.0/build/web/hack-subset.css');
 
+/* TODO: test light mode colors */
 body {
-    --bg: white;
-    --fg: #FFE600;
-    --txt: black;
-    --edbg: white;
+    --bg: #ffffc3;
+    --fg: #ffd400;
+    --txt: #000000;
+    --edbg: #f9f9f9;
+    --header-bg: #ffff4b;
     font-family: Hack, monospace;
     padding: 0px;
     margin: 0px;
@@ -17,6 +19,8 @@ body {
     font-weight: bold;
     text-align: center;
     padding: 10px;
+    color: #000000;
+    background: var(--header-bg);
     border: 7px solid var(--fg); 
 }
 
@@ -42,25 +46,20 @@ body {
     font-size: 1.5rem;
 }
 
-.time {
-    color: orange;
-}
-
-.location {
-    color: green;
+.outline, .calendar, .editor {
+    border: 5px solid #000000;
+    border-radius: 20px;
+    color: var(--txt);
+    background: var(--edbg);
 }
 
 .outline {
     width: 25%;
-    color: var(--txt);
-    background: var(--edbg);
 }
 
 .calendar {
     display: grid;
     width: 50%;
-    color: var(--txt);
-    background: var(--edbg);
 }
 
 .editor {
@@ -85,15 +84,16 @@ body {
 
 .footer {
     text-align: center;
-    color: black;
+    color: #000000;
     background: var(--fg);
     padding: 20px;
 }
 
+ 
 @media (prefers-color-scheme: dark) {
     body {
         --bg: #292929;
-        --txt: white;
+        --txt: #ffffff;
         --edbg: #252323;
     }
 }

@@ -11,6 +11,7 @@ import Html.Events exposing (..)
 import EventParser exposing (..)
 import List
 
+
 main = 
     Browser.element { init = init
                     , update = update
@@ -18,7 +19,11 @@ main =
                     , subscriptions = subscriptions
                     }
 
-type alias Model = Events
+
+-- Init
+type alias Model
+    = Events
+
 
 init : () -> (Model, Cmd Msg)
 init _ = 
@@ -26,7 +31,11 @@ init _ =
     , Cmd.none
     )
 
-type Msg = NewEditorInput String
+
+-- Update
+type Msg 
+    = NewEditorInput String
+
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -38,10 +47,14 @@ update msg model =
                 Err _ -> (model, Cmd.none)
                 -- Err _ -> ([ Event "error" [(Custom "oh-no", "error")] ] , Cmd.none) 
 
+
+-- Subscriptions
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.none
 
+
+-- View
 view : Model -> Html Msg
 view model  =
     div []
@@ -50,15 +63,21 @@ view model  =
     , footer
     ]
 
+
+-- View helper methods
+header : Html Msg
 header = 
     div [ class "header" ] [ text "lemon" ]
 
+
+body : Model -> Html Msg
 body model =
     div [ class "body" ] 
     [ outline model
     , cal 
     , editor
     ]
+
 
 outline : Events -> Html Msg
 outline events = 
@@ -67,7 +86,9 @@ outline events =
             , ("outline", True)
             ]
         ] (List.map eventContainer events)
- 
+
+
+cal : Html Msg
 cal = 
     div [ classList
             [ ("container", True)
@@ -75,10 +96,12 @@ cal =
             ]
         ] []
 
+
+editor : Html Msg
 editor = 
     div [ classList
             [ ("container", True)
-            , ("tag", True)
+            , ("editor", True)
             ]
         ] 
         [ textarea 
@@ -88,17 +111,16 @@ editor =
             ] [] 
         ]
 
+
+footer : Html Msg
 footer = 
     div [ class "footer" ] [ text "made with <3 by 1ntEgr8" ]
 
-parseText : String -> Msg
-parseText s = NewEditorInput s
 
--- prior to passing to this function, i need to group the events by tag
--- basically it should look like
--- currently, it is (Tag, Descriptors)
--- it should be
--- (Tag, [] Descriptors)
+parseText : String -> Msg
+parseText s = 
+    NewEditorInput s
+
 
 eventContainer : Event -> Html Msg
 eventContainer (Event tag descriptors) =
@@ -113,7 +135,8 @@ eventContainer (Event tag descriptors) =
             ]
        , div [] (List.map descriptorContainer descriptors)
        ]
-        
+
+
 descriptorContainer : Descriptor -> Html Msg
 descriptorContainer (key, value) = 
     case key of
