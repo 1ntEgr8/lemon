@@ -113,6 +113,9 @@ nameParser =
         |. spaces
 
 
+-- not needed for now
+-- needs to be rewritten
+-- parser goes into a loop when this is plugged in
 tagsParser : Parser Tags
 tagsParser =
     succeed (\tags -> tags)

@@ -7,6 +7,10 @@ body {
     --txt: #000000;
     --mbbg: #ffcd83;
     --edbg: #f9f9f9;
+    --ol1: #ff9191;
+    --ol2: #90b2ff;
+    --key: #ffd300;
+    --val: #ffffff;
     --header-bg: #ffff4b;
     font-family: Hack, monospace;
     padding: 0px;
@@ -66,6 +70,31 @@ body {
     width: calc(25% - 40px);
     height: calc(100% - 40px);
     padding: 20px; 
+}
+
+.outline-level-1 {
+    font-size: 1.25rem;
+    color: var(--ol1);
+}
+
+.outline-level-2 {
+    color: var(--ol2);
+    padding-left: 1.25rem;
+}
+
+.outline-level-3 {
+    padding-left: 2.5rem;
+}
+
+.key {
+    font-weight: bold;
+    color: var(--key);
+    vertical-align: top;
+}
+
+.val {
+    color: var(--val);
+    vertical-align: top;
 }
 
 .calendar {

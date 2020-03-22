@@ -6,6 +6,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import CalendarParser exposing (..)
 import List
+import Dict exposing (Dict)
 import Parser
 
 
@@ -25,7 +26,7 @@ type alias Model
 
 init : () -> (Model, Cmd Msg)
 init _ = 
-    ( [Day "error" []]
+    ( [Day "" []]
     , Cmd.none
     )
 
@@ -38,12 +39,13 @@ type Msg
 
 -- error calendar 
 -- [ Day "error" [] ]
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         Display calendar ->
             (calendar, Cmd.none)
-        ParseError err ->
-            ([ Day err [] ], Cmd.none)
+        ParseError _ ->
+            (model, Cmd.none)
 
 
 -- Subscriptions
@@ -133,11 +135,44 @@ parseEditorText editorText =
         case res of
             Ok calendar ->
                 Display calendar 
-            Err err ->
+            Err _ ->
                 ParseError "error"
 
 generateOutline : Calendar -> List (Html Msg)
 generateOutline =
     List.map (\day -> 
-        div []
-            [ text day.value ])
+        details 
+            [ attribute "open" "true" ]
+            [ summary [ class "outline-level-1" ] [ text day.value ] 
+            , getEventsDiv day.events 
+            ]
+        )
+
+
+getEventsDiv : List Event -> Html Msg
+getEventsDiv events =
+    div
+        []
+        (List.map (\event ->
+            details
+                []
+                [ summary [ class "outline-level-2" ] [ text event.name ]
+                , getDescriptorsDiv event.descriptors
+                ]
+            ) events
+        )
+
+
+getDescriptorsDiv : Descriptors -> Html Msg
+getDescriptorsDiv descriptors =
+    table 
+        [ class "outline-level-3" ]
+        (List.map (\(k, v) -> 
+            tr
+                []
+                [ td [ class "key" ] [ text k ]
+                , td [ class "value" ] [ text v ]
+                ]
+            ) (Dict.toList descriptors)
+        )
+
