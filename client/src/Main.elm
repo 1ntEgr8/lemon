@@ -1,51 +1,49 @@
--- TODO multiple events associated to the same tag feature (implemented using --)
--- TODO add day feature
--- TODO figure out the calendar alg
--- TODO figure out the calendar css
-module Main exposing (..)
+module Main exposing (init)
 
 import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import EventParser exposing (..)
+import CalendarParser exposing (..)
 import List
+import Parser
 
 
 main = 
-    Browser.element { init = init
-                    , update = update
-                    , view = view
-                    , subscriptions = subscriptions
-                    }
+    Browser.element 
+        { init = init
+        , update = update
+        , view = view
+        , subscriptions = subscriptions
+        }
 
 
 -- Init
 type alias Model
-    = Events
+    = Calendar 
 
 
 init : () -> (Model, Cmd Msg)
 init _ = 
-    ( [ Event "tag" [(Custom "key", "val")] ]
+    ( [Day "error" []]
     , Cmd.none
     )
 
 
 -- Update
 type Msg 
-    = NewEditorInput String
+    = Display Calendar 
+    | ParseError String 
 
 
-update : Msg -> Model -> (Model, Cmd Msg)
+-- error calendar 
+-- [ Day "error" [] ]
 update msg model =
     case msg of
-        NewEditorInput s ->
-            let res = getEvents s in
-            case res of
-                Ok events -> (events, Cmd.none)
-                Err _ -> (model, Cmd.none)
-                -- Err _ -> ([ Event "error" [(Custom "oh-no", "error")] ] , Cmd.none) 
+        Display calendar ->
+            (calendar, Cmd.none)
+        ParseError err ->
+            ([ Day err [] ], Cmd.none)
 
 
 -- Subscriptions
@@ -59,6 +57,7 @@ view : Model -> Html Msg
 view model  =
     div []
     [ header
+    , menubar
     , body model 
     , footer
     ]
@@ -70,6 +69,15 @@ header =
     div [ class "header" ] [ text "lemon" ]
 
 
+menubar : Html Msg
+menubar = 
+    div [ class "menubar" ] 
+    [ div 
+        [ contenteditable True ]
+        [ text "Untitled"]
+    ]
+
+
 body : Model -> Html Msg
 body model =
     div [ class "body" ] 
@@ -78,14 +86,14 @@ body model =
     , editor
     ]
 
-
-outline : Events -> Html Msg
-outline events = 
+-- calendar = List Day = [ { value, events }, { value, events } ]
+outline : Calendar -> Html Msg
+outline calendar = 
     div [ classList
             [ ("container", True)
             , ("outline", True)
             ]
-        ] (List.map eventContainer events)
+        ] (generateOutline calendar)
 
 
 cal : Html Msg
@@ -107,7 +115,7 @@ editor =
         [ textarea 
             [ class "editor-text-area"
             , spellcheck False
-            , onInput parseText
+            , onInput parseEditorText
             ] [] 
         ]
 
@@ -117,32 +125,19 @@ footer =
     div [ class "footer" ] [ text "made with <3 by 1ntEgr8" ]
 
 
-parseText : String -> Msg
-parseText s = 
-    NewEditorInput s
+parseEditorText : String -> Msg
+parseEditorText editorText = 
+    let 
+        res = getCalendarFrom editorText 
+    in
+        case res of
+            Ok calendar ->
+                Display calendar 
+            Err err ->
+                ParseError "error"
 
-
-eventContainer : Event -> Html Msg
-eventContainer (Event tag descriptors) =
-   div [ classList 
-            [ ("event", True)
-            ]
-       ]
-       [ h4 
-            [ id tag 
-            ]
-            [ text tag 
-            ]
-       , div [] (List.map descriptorContainer descriptors)
-       ]
-
-
-descriptorContainer : Descriptor -> Html Msg
-descriptorContainer (key, value) = 
-    case key of
-        Name -> div [ class "name" ] [ text value ]
-        Time -> div [ class "time" ] [ text ("time " ++ value) ]
-        Location -> div [ class "location" ] [ text ("location " ++ value) ]
-        Custom s -> div [] [ text (s ++ " " ++ value) ]
-
-
+generateOutline : Calendar -> List (Html Msg)
+generateOutline =
+    List.map (\day -> 
+        div []
+            [ text day.value ])
