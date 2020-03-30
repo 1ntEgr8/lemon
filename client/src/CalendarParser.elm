@@ -7,7 +7,15 @@ import List
 type alias Key = String
 
 
-type alias Value = String
+type alias Start = Float 
+
+
+type alias End = Float 
+
+
+type Value 
+    = TimeRange Start End 
+    | Custom String
 
 
 type alias Tags
@@ -145,7 +153,7 @@ descriptorsParser =
 descriptorsParserHelp : Descriptors -> Parser (Step (Descriptors) (Descriptors))
 descriptorsParserHelp dict =
     oneOf
-        [ succeed (\k v -> Loop (Dict.insert k v dict))
+        [ succeed (\k v -> Loop (addDescriptor k v dict))
             |. spaces
             |= keyParser
             |. spaces
@@ -156,6 +164,102 @@ descriptorsParserHelp dict =
         , succeed ()
             |> map (\_ -> Done dict)
         ]
+
+
+addDescriptor : Key -> String -> Descriptors -> Descriptors
+addDescriptor k v dict =
+    case k of
+        "time" -> 
+            let
+                res = parseTime v
+            in
+                case res of
+                    Ok (start, end) -> 
+                        Dict.insert k (TimeRange start end) dict
+                    Err _ ->
+                        dict
+                    -- if there is an error in parsing time, ignore that entry
+        _ ->
+            Dict.insert k (Custom v) dict
+
+
+-- TODO add an error type
+parseTime : String -> Result (List DeadEnd) (Start, End)
+parseTime timeString =
+    run timeRangeParser timeString
+
+
+-- TODO
+--      check if the time is valid or not
+--      get rid of parsing of floats
+--  eg: 
+--      8-9:30pm
+--      9:30-8:30pm
+timeRangeParser : Parser (Start, End) 
+timeRangeParser =
+    succeed (\start s_mod end e_mod-> modifyTimeRange (start, end) (s_mod, e_mod)) 
+        |. spaces
+        |= timeParser 
+        |. spaces
+        |= oneOf
+            [ map (\_ -> "am") (keyword "am")
+            , map (\_ -> "pm") (keyword "pm")
+            , map (\_ -> "") (keyword "")
+            ]
+        |. spaces
+        |. symbol "-"
+        |. spaces
+        |= timeParser
+        |. spaces
+        |= oneOf
+            [ map (\_ -> "am") (keyword "am")
+            , map (\_ -> "pm") (keyword "pm")
+            , map (\_ -> "") (keyword "")
+            ]
+       
+
+-- TODO 
+-- check if the numbers passed in are valid
+-- fix bug
+--      10 - 12pm -> 10, 12; not 22, 24
+timeParser : Parser Float
+timeParser =
+    succeed getTime 
+        |= int
+        |= oneOf 
+            [ succeed identity
+                |. symbol ":"
+                |= int
+            , succeed 0
+            ]
+
+modifyTimeRange : (Start, End) -> (String, String) -> (Start, End)
+modifyTimeRange (start, end) modifiers  =
+    case modifiers of
+        ("", "pm") -> 
+            (start + 12, end + 12)
+        ("am", "pm") ->
+            (start, end + 12)
+        _ -> 
+            (start, end)
+
+
+getTime : Int -> Int -> Float
+getTime hr minutes =
+    toFloat hr + minutesToFraction minutes
+
+
+minutesToFraction : Int -> Float
+minutesToFraction minutes = 
+    let
+        res = String.toFloat ("0." ++ String.fromInt minutes)
+    in
+        case res of
+            Just val ->
+                toFloat (truncate (val / 0.6 * 100.0)) * 0.01
+            Nothing  ->
+                0
+
 
 
 nameValueParser : Parser Name
